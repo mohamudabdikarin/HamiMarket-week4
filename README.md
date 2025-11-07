@@ -41,13 +41,6 @@ This project was completed as part of the HamiSkills Web Development Internship 
 - **Smooth Animations:** Cart items slide in, buttons have hover effects, and page transitions are seamless.
 - **Responsive Cart:** The cart sidebar adapts perfectly to mobile, tablet, and desktop screens.
 
-### Previous Features (Week 2)
-- **Dynamic Product Catalog:** Products loaded from JavaScript array
-- **Real-time Search:** Filter products by name instantly
-- **Category Filter:** Filter by "All", "Fruits", or "Vegetables"
-- **Price Filter:** Range slider to filter by maximum price
-- **Responsive Design:** Fully optimized for all devices
-- **Brand Consistency:** Cohesive design matching the original landing page
 
 ## Technologies Used
 - **HTML5** - Semantic markup and structure
@@ -57,23 +50,6 @@ This project was completed as part of the HamiSkills Web Development Internship 
 - **Font Awesome** - Icons for UI elements
 - **Google Fonts** - Poppins font family
 
-## Project Structure
-```
-hami-minimarket/
-├── assets/
-│   ├── hami-logo.jpg
-│   └── store-interior-image.png
-├── css/
-│   └── style.css
-├── js/
-│   ├── main.js          # Main entry point & UI module
-│   ├── cart.js          # Cart functionality
-│   ├── product.js       # Product rendering & filters
-│   └── storage.js       # LocalStorage management
-├── index.html           # Main application
-├── toast-demo.html      # Toast notification demo
-└── README.md
-```
 
 ## How to Run the Project
 
@@ -82,18 +58,6 @@ hami-minimarket/
 2. Open `index.html` in your web browser
 3. The website will load immediately with all features working
 
-### Option 2: Local Web Server (Recommended)
-```bash
-# Using Python 3
-python -m http.server 8000
-
-# Using Node.js
-npx http-server
-
-# Using PHP
-php -S localhost:8000
-```
-Then open: `http://localhost:8000`
 
 ## How to Test the Cart
 
@@ -154,22 +118,6 @@ Example:
   }
 ]
 ```
-
-## Browser Compatibility
-- ✅ Chrome (latest)
-- ✅ Firefox (latest)
-- ✅ Safari (latest)
-- ✅ Edge (latest)
-- ✅ Mobile browsers (iOS Safari, Chrome Mobile)
-
-## Credits
-- **Developer:** [Your Name]
-- **Program:** HamiSkills Web Development Internship
-- **Week:** 3 - Shopping Cart System
-- **Images:** Unsplash (product images)
-- **Icons:** Font Awesome
-- **Fonts:** Google Fonts (Poppins)
-
 ---
 
 **Hami MiniMarket - Fresh. Local. Trusted.** 🥬🍎🥕
