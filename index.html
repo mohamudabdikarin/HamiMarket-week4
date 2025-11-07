@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hami MiniMarket - Week 3 Cart System</title>
+    <!-- Google Fonts and Font Awesome -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- Link to your external CSS file -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    
+      <!-- Header (Unchanged) -->
+    <header class="header">
+        <div class="container">
+            <div class="logo">
+                <!-- Using the image from user's upload -->
+                <img src="assets/hami-logo.jpg" 
+                     alt="Hami MiniMarket Logo" 
+                     class="logo-img">
+            </div>
+            <nav class="nav">
+                <ul class="nav-list">
+                    <li><a href="#home" class="nav-link">Home</a></li>
+                    <li><a href="#products" class="nav-link">Products</a></li>
+                    <li><a href="#about" class="nav-link">About</a></li>
+                    <li><a href="#contact" class="nav-link">Contact</a></li>
+                    <!-- Cart Icon (Now interactive) -->
+                    <li>
+                        <div class="cart-icon-wrapper" id="cart-icon" title="View Cart">
+                            <i class="fas fa-shopping-cart"></i>
+                            <span id="cart-count">0</span>
+                        </div>
+                    </li>
+                </ul>
+                <div class="hamburger">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <!-- This div will contain the main shop content -->
+    <div id="shop-page" class="page">
+        <!-- Hero Section (Unchanged) -->
+        <section id="home" class="hero">
+            <div class="hero-background">
+                <img src="https://images.unsplash.com/photo-1542838132-92c53300491e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2074&q=80" alt="Fresh fruits and vegetables at Hami MiniMarket" class="hero-bg-image">
+                <div class="hero-overlay"></div>
+            </div>
+            <div class="hero-content">
+                <h2 class="hero-title">Fresh. Local. Trusted.</h2>
+                <p class="hero-subtitle">Discover the finest selection of fresh fruits and vegetables from local farmers</p>
+                <button class="cta-button">Shop Now</button>
+            </div>
+        </section>
+
+        <!-- Products Section (Unchanged HTML structure) -->
+        <section id="products" class="products">
+            <div class="container">
+                <h2 class="section-title">Our Fresh Products</h2>
+                
+                <div class="product-filters">
+                    <div class="filter-group">
+                        <label for="search-input">Search by Name</label>
+                        <div class="search-bar">
+                            <i class="fas fa-search"></i>
+                            <input type="search" id="search-input" placeholder="e.g., Apples, Carrots...">
+                        </div>
+                    </div>
+                    <div class="filter-group">
+                        <label>Filter by Category</label>
+                        <div class="category-filters" id="category-filters">
+                            <button class="category-btn active" data-category="all">All</button>
+                            <button class="category-btn" data-category="fruit">Fruits</button>
+                            <button class="category-btn" data-category="vegetable">Vegetables</button>
+                        </div>
+                    </div>
+                    <div class="filter-group">
+                         <label for="price-slider">Filter by Price</label>
+                        <div class="price-display">
+                            <span>Up to:</span>
+                            <span id="price-value">$10.00</span>
+                        </div>
+                        <input type="range" id="price-slider" min="1" max="10" value="10" step="0.50">
+                    </div>
+                </div>
+
+                <div class="products-grid" id="products-grid">
+                    <!-- Product cards will be injected here by JavaScript -->
+                </div>
+            </div>
+        </section>
+
+        <!-- About Section (Unchanged) -->
+        <section id="about" class="about">
+            <div class="container">
+                <div class="about-content">
+                    <div class="about-text">
+                        <h2 class="section-title" style="text-align: left;">About Hami MiniMarket</h2>
+                        <p>At Hami MiniMarket, we believe in bringing you the freshest, highest-quality fruits and vegetables from local farmers. Our mission is to support our community while providing you with nutritious, delicious produce that your family deserves.</p>
+                        <p>We carefully select each item to ensure it meets our high standards for freshness and quality. From crisp apples to vibrant vegetables, every product in our store is chosen with care and delivered with pride.</p>
+                        <div class="features">
+                            <div class="feature">
+                                <i class="fas fa-truck"></i>
+                                <h4>Fresh Delivery</h4>
+                                <p>Daily deliveries from local farms</p>
+                            </div>
+                            <div class="feature">
+                                <i class="fas fa-leaf"></i>
+                                <h4>Organic Options</h4>
+                                <p>Wide selection of organic produce</p>
+                            </div>
+                            <div class="feature">
+                                <i class="fas fa-heart"></i>
+                                <h4>Community Focus</h4>
+                                <p>Supporting local farmers and families</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="about-image">
+                         <!-- Using the image from user's upload -->
+                         <img src="assets/store-interior-image.png" alt="Store Interior">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Contact Section (Unchanged) -->
+        <section id="contact" class="contact">
+            <div class="container">
+                <h2 class="section-title">Get In Touch</h2>
+                <div class="contact-content">
+                    <div class="contact-info">
+                        <h3>Visit Our Store</h3>
+                        <div class="info-item">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <p>123 Main Street, Hami City</p>
+                        </div>
+                        <div class="info-item">
+                            <i class="fas fa-phone"></i>
+                            <p>(555) 123-4567</p>
+                        </div>
+                        <div class="info-item">
+                            <i class="fas fa-envelope"></i>
+                            <p>info@hamimarket.com</p>
+                        </div>
+                        <div class="info-item">
+                            <i class="fas fa-clock"></i>
+                            <p>Mon-Sat: 8AM-8PM<br>Sun: 9AM-6PM</p>
+                        </div>
+                    </div>
+                    <form class="contact-form" id="contactForm">
+                        <div class="form-group">
+                            <label for="name">Name</label>
+                            <input type="text" id="name" name="name" required>
+                            <span class="error-message" id="nameError"></span>
+                        </div>
+                        <div class="form-group">
+                            <label for="email">Email</label>
+                            <input type="email" id="email" name="email" required>
+                            <span class="error-message" id="emailError"></span>
+                        </div>
+                        <div class="form-group">
+                            <label for="message">Message</label>
+                            <textarea id="message" name="message" rows="5" required></textarea>
+                            <span class="error-message" id="messageError"></span>
+                        </div>
+                        <button type="submit" class="submit-button">Send Message</button>
+                    </form>
+                </div>
+            </div>
+        </section>
+    </div> <!-- End of #shop-page -->
+
+    <!-- NEW: Order Summary Page -->
+    <section id="summary-page" class="page hidden">
+        <div class="container">
+            <div class="summary-container">
+                <div class="summary-header">
+                    <h2>Order Summary</h2>
+                    <p>Please review your items before confirming.</p>
+                </div>
+                <div class="summary-body">
+                    <h3>Your Items</h3>
+                    <div id="summary-list">
+                        <!-- Summary items will be injected here -->
+                    </div>
+                    
+                    <h3>Order Totals</h3>
+                    <div id="summary-totals">
+                        <!-- Summary totals (subtotal, tax, etc.) will be injected here -->
+                    </div>
+                    
+                    <div class="summary-actions">
+                        <button class="submit-button" id="confirm-order-btn">
+                            <i class="fas fa-check-circle"></i> Confirm Order
+                        </button>
+                        <button class="submit-button back-to-shop-btn" id="back-to-shop-btn">
+                            <i class="fas fa-arrow-left"></i> Back to Shop
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer (Unchanged) -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>Hami MiniMarket</h3>
+                    <p>Your trusted source for fresh, local produce.</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="#home">Home</a></li>
+                        <li><a href="#products">Products</a></li>
+                        <li><a href="#about">About</a></li>
+                        <li><a href="#contact">Contact</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Follow Us</h4>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-facebook"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-youtube"></i></a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 Hami MiniMarket. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Back to Top Button (Unchanged) -->
+    <button class="back-to-top" id="backToTop">
+        <i class="fas fa-arrow-up"></i>
+    </button>
+    
+    <!-- NEW: Cart Sidebar -->
+    <div class="cart-overlay" id="cart-overlay"></div>
+    <aside class="cart-sidebar" id="cart-sidebar">
+        <div class="cart-header">
+            <h2>Your Cart</h2>
+            <i class="fas fa-times close-cart-btn" id="close-cart-btn"></i>
+        </div>
+        <div class="cart-items" id="cart-items-container">
+            <!-- Cart items will be injected here -->
+            <!-- e.g.
+            <div class="cart-item">
+                <img src="https://placehold.co/80x80" alt="Product" class="cart-item-img">
+                <div class="cart-item-details">
+                    <div class="cart-item-info">
+                        <h4>Product Name</h4>
+                        <span class="cart-item-price">$2.99</span>
+                    </div>
+                    <div class="cart-item-controls">
+                        <div class="quantity-control">
+                            <button class="quantity-btn" data-action="decrease">-</button>
+                            <input type="number" class="item-quantity" value="1" min="1">
+                            <button class="quantity-btn" data-action="increase">+</button>
+                        </div>
+                        <button class="remove-item-btn"><i class="fas fa-trash"></i></button>
+                    </div>
+                </div>
+            </div>
+            -->
+            <!-- Empty Cart Message -->
+            <div class="empty-cart-message" id="empty-cart-message">
+                <i class="fas fa-shopping-basket"></i>
+                <p>Your cart is empty.</p>
+            </div>
+        </div>
+        <div class="cart-footer" id="cart-footer">
+            <div class="cart-summary-row">
+                <span>Subtotal</span>
+                <span id="cart-subtotal">$0.00</span>
+            </div>
+            <div class="cart-summary-row discount" id="cart-discount-row" style="display: none;">
+                <span>Discount (10%)</span>
+                <span id="cart-discount">$0.00</span>
+            </div>
+            <div class="cart-summary-row">
+                <span>Tax (5%)</span>
+                <span id="cart-tax">$0.00</span>
+            </div>
+            <div class="cart-summary-row total">
+                <span>Total</span>
+                <span id="cart-total">$0.00</span>
+            </div>
+            <button class="cart-checkout-btn" id="cart-checkout-btn">
+                <i class="fas fa-shield-alt"></i> Proceed to Checkout
+            </button>
+        </div>
+    </aside>
+    
+    <!-- Advanced Toast Notification -->
+    <div id="toast-notification">
+        <div class="toast-content">
+            <div class="toast-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="toast-message">
+                <div class="toast-title">Success!</div>
+                <div class="toast-description">Item added to cart</div>
+            </div>
+            <button class="toast-close" aria-label="Close notification">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="toast-progress"></div>
+    </div>
+    <script src="js/main.js" type="module"></script>
+</body>
+</html>
