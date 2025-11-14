@@ -2,7 +2,10 @@ import { debounce } from './main.js';
 
 //  State (local to this module) 
 let currentFilters = { searchTerm: '', category: 'all', maxPrice: 10 };
-const API_URL = 'http://localhost:5001/api'; // Backend API URL
+// Automatically detect if we're in production or development
+const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:5001/api'
+    : 'https://hami-market-week4.vercel.app/api';
 
 /**
  * Handles fetching, storing, and rendering the product list.

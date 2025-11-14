@@ -9,7 +9,10 @@ const DISCOUNT_THRESHOLD = 50.00;
 const DISCOUNT_RATE = 0.10;
 window.TAX_RATE = TAX_RATE;
 
-const API_URL = 'http://localhost:5001/api'; // Backend API URL
+// Automatically detect if we're in production or development
+const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:5001/api'
+    : 'https://hami-market-week4.vercel.app/api';
 
 let cart = [];
 let currentUser = null; // Will be fetched
