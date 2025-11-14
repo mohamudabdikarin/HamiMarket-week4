@@ -9,7 +9,10 @@ import jwt from 'jsonwebtoken';
 dotenv.config();
 const app = express();
 app.use(express.json());
-app.use(cors()); // Allow requests from your frontend
+app.use(cors({
+    origin: ['https://hami-market-week4.vercel.app', 'http://localhost:8000', 'http://127.0.0.1:8000'],
+    credentials: true
+})); // Allow requests from your frontend
 
 const PORT = process.env.PORT || 5001;
 const MONGO_URI = process.env.MONGO_URI;
