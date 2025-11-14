@@ -1,23 +1,23 @@
 import { StorageModule } from './storage.js';
-import { UIModule } from './main.js'; // Import UIModule from main.js
+import { UIModule } from './main.js';
+import { ProductModule } from './product.js';
 
 // --- Constants ---
 const DISCOUNT_THRESHOLD = 50.00;
 const DISCOUNT_RATE = 0.10;
 
 /**
- * MODULE: CartModule (Task 3)
- * Handles all cart logic (add, remove, update, totals).
+
+ * Handles all cart logic with stock checking.
  */
 export const CartModule = {
-    // Initialize the cart logic, accepting the global cart state
     init(cart) { 
         // Event delegation for Add to Cart buttons
         const productsGrid = document.getElementById('products-grid');
         if (productsGrid) {
             productsGrid.addEventListener('click', (e) => {
-                if (e.target.classList.contains('add-to-cart-btn')) {
-                    const btn = e.target;
+                const btn = e.target.closest('.add-to-cart-btn');
+                if (btn) {
                     this.addToCart(cart, {
                         id: btn.dataset.id,
                         name: btn.dataset.name,
@@ -25,7 +25,7 @@ export const CartModule = {
                         image: btn.dataset.image
                     });
                     
-                    // Button feedback
+                    // Button feedback (no change)
                     btn.innerHTML = 'Added!';
                     btn.style.background = "var(--secondary-green)";
                     setTimeout(() => {
@@ -36,7 +36,7 @@ export const CartModule = {
             });
         }
         
-        // Event delegation for cart controls
+        // Event delegation for cart controls (no change)
         const cartItemsContainer = document.getElementById('cart-items-container');
         if (cartItemsContainer) {
             cartItemsContainer.addEventListener('click', (e) => {
@@ -46,23 +46,17 @@ export const CartModule = {
                 
                 const id = cartItem.dataset.id;
                 
-                // Remove button
                 if(target.closest('.remove-item-btn')) {
                     this.removeFromCart(cart, id);
                 }
-                
-                // Decrease quantity
                 if(target.matches('[data-action="decrease"]')) {
                     this.updateQuantity(cart, id, 'decrease');
                 }
-                
-                // Increase quantity
                 if(target.matches('[data-action="increase"]')) {
                     this.updateQuantity(cart, id, 'increase');
                 }
             });
             
-            // Manual quantity input
             cartItemsContainer.addEventListener('change', (e) => {
                  if (e.target.classList.contains('item-quantity')) {
                     const id = e.target.closest('.cart-item').dataset.id;
@@ -76,8 +70,22 @@ export const CartModule = {
         }
     },
     
+    // (UPDATED) Add to cart with stock check
     addToCart(cart, product) {
+        // (NEW) Check stock
+        const productData = ProductModule.getProductById(product.id);
+        if (!productData) return UIModule.showToast("Product not found.", "error");
+        
+        const availableStock = productData.stock;
         const existingItem = cart.find(item => item.id === product.id);
+        const quantityInCart = existingItem ? existingItem.quantity : 0;
+
+        if (quantityInCart >= availableStock) {
+            UIModule.showToast("You've already added all available stock!", "warning");
+            return;
+        }
+        // --- End stock check ---
+
         if (existingItem) {
             existingItem.quantity++;
             UIModule.showToast(`${product.name} quantity updated in cart!`, 'success');
@@ -86,45 +94,64 @@ export const CartModule = {
             UIModule.showToast(`${product.name} added to cart!`, 'success');
         }
         StorageModule.saveCart(cart);
-        UIModule.updateCart(cart); // Pass cart to updateUI
+        UIModule.updateCart(cart);
     },
     
+    // No changes needed
     removeFromCart(cart, id) {
         const item = cart.find(item => item.id === id);
         const itemName = item ? item.name : 'Item';
         const newCart = cart.filter(item => item.id !== id);
-        cart.length = 0; // Clear the original array
-        Array.prototype.push.apply(cart, newCart); // Push new items back
+        cart.length = 0; 
+        Array.prototype.push.apply(cart, newCart);
         StorageModule.saveCart(cart);
-        UIModule.updateCart(cart); // Pass cart to updateUI
+        UIModule.updateCart(cart);
         UIModule.showToast(`${itemName} removed from cart`, 'info');
     },
     
+    // (UPDATED) Update quantity with stock check
     updateQuantity(cart, id, action, isAbsolute = false) {
         const item = cart.find(item => item.id === id);
         if (!item) return;
+
+        // (NEW) Check stock
+        const productData = ProductModule.getProductById(id);
+        if (!productData) return UIModule.showToast("Product not found.", "error");
+        const availableStock = productData.stock;
+        // --- End stock check ---
         
+        let newQuantity = item.quantity;
+
         if (isAbsolute) {
-            item.quantity = action;
+            newQuantity = action;
         } else if (action === 'increase') {
-            item.quantity++;
+            newQuantity++;
         } else if (action === 'decrease') {
-            item.quantity--;
+            newQuantity--;
         }
+
+        // (NEW) Validate against stock
+        if (newQuantity > availableStock) {
+            newQuantity = availableStock;
+            UIModule.showToast(`Only ${availableStock} in stock!`, "warning");
+        }
+        // --- End validation ---
         
-        if (item.quantity <= 0) {
+        if (newQuantity <= 0) {
             this.removeFromCart(cart, id);
         } else {
+            item.quantity = newQuantity; // Set the validated quantity
             StorageModule.saveCart(cart);
-            UIModule.updateCart(cart); // Pass cart to updateUI
+            UIModule.updateCart(cart);
         }
     },
     
+    // No changes needed
     getCartTotals(cart) {
         const subtotal = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
         const discount = subtotal > DISCOUNT_THRESHOLD ? subtotal * DISCOUNT_RATE : 0;
         const subtotalAfterDiscount = subtotal - discount;
-        const tax = subtotalAfterDiscount * (window.TAX_RATE || 0.05); // Use global TAX_RATE
+        const tax = subtotalAfterDiscount * (window.TAX_RATE || 0.05);
         const total = subtotalAfterDiscount + tax;
         
         return {
@@ -135,9 +162,10 @@ export const CartModule = {
         };
     },
     
+    
     clearCart(cart) {
-        cart.length = 0; // Clear the original array
+        cart.length = 0;
         StorageModule.saveCart(cart);
-        UIModule.updateCart(cart); // Pass cart to updateUI
+        UIModule.updateCart(cart);
     }
 };

@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Hami MiniMarket</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+    <div class="admin-container">
+        <!-- Sidebar -->
+        <aside class="admin-sidebar">
+            <div class="admin-logo">
+                <img src="assets/hami-logo.jpg" alt="Hami MiniMarket" class="admin-logo-img">
+                <h2>Admin</h2>
+            </div>
+            <nav class="admin-nav">
+                <a href="#dashboard" class="admin-nav-link active" data-section="dashboard">
+                    <i class="fas fa-chart-line"></i> Dashboard
+                </a>
+                <a href="#products" class="admin-nav-link" data-section="products">
+                    <i class="fas fa-box"></i> Products
+                </a>
+                <a href="#orders" class="admin-nav-link" data-section="orders">
+                    <i class="fas fa-shopping-cart"></i> Orders
+                </a>
+                <a href="#customers" class="admin-nav-link" data-section="customers">
+                    <i class="fas fa-users"></i> Customers
+                </a>
+            </nav>
+            <div class="admin-logout">
+                <button id="admin-logout-btn">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="admin-main">
+            <!-- Header -->
+            <header class="admin-header">
+                <div class="admin-header-left">
+                    <button id="mobile-menu-toggle" class="mobile-menu-btn">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1 id="section-title">Dashboard</h1>
+                </div>
+                <div class="admin-header-actions">
+                    <button id="dark-mode-toggle" class="dark-mode-btn" title="Toggle Dark Mode">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                    <div class="admin-user">
+                        <i class="fas fa-user-shield"></i>
+                        <span id="admin-username">Admin</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Dashboard Section -->
+            <section id="dashboard-section" class="admin-section active">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: #4CAF50;">
+                            <i class="fas fa-dollar-sign"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="total-revenue">$0.00</h3>
+                            <p>Total Revenue</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: #2196F3;">
+                            <i class="fas fa-shopping-cart"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="total-orders">0</h3>
+                            <p>Total Orders</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: #FF9800;">
+                            <i class="fas fa-box"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="total-products">0</h3>
+                            <p>Products</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: #9C27B0;">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="total-customers">0</h3>
+                            <p>Customers</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="recent-orders">
+                    <h2>Recent Orders</h2>
+                    <div id="recent-orders-list"></div>
+                </div>
+            </section>
+
+            <!-- Products Section -->
+            <section id="products-section" class="admin-section">
+                <div class="section-header">
+                    <h2>Manage Products</h2>
+                    <button class="btn-primary" id="add-product-btn">
+                        <i class="fas fa-plus"></i> Add Product
+                    </button>
+                </div>
+                <div class="products-table">
+                    <table id="products-table">
+                        <thead>
+                            <tr>
+                                <th>Image</th>
+                                <th>Name</th>
+                                <th>Category</th>
+                                <th>Price</th>
+                                <th>Stock</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="products-tbody"></tbody>
+                    </table>
+                    <div id="products-mobile" class="products-mobile-container"></div>
+                </div>
+            </section>
+
+            <!-- Orders Section -->
+            <section id="orders-section" class="admin-section">
+                <h2>All Orders</h2>
+                <div id="orders-list"></div>
+            </section>
+
+            <!-- Customers Section -->
+            <section id="customers-section" class="admin-section">
+                <h2>Customer List</h2>
+                <div class="customers-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Orders</th>
+                                <th>Total Spent</th>
+                            </tr>
+                        </thead>
+                        <tbody id="customers-tbody"></tbody>
+                    </table>
+                </div>
+            </section>
+
+
+        </main>
+    </div>
+
+    <!-- Product Modal -->
+    <div id="product-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modal-title">Add Product</h2>
+                <button class="modal-close">&times;</button>
+            </div>
+            <form id="product-form">
+                <input type="hidden" id="product-id">
+                <div class="form-group">
+                    <label>Product Name</label>
+                    <input type="text" id="product-name" required>
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="product-description" required></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Price</label>
+                        <input type="number" id="product-price" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Unit</label>
+                        <input type="text" id="product-unit" required placeholder="lb, kg, each">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Category</label>
+                        <select id="product-category" required>
+                            <option value="fruit">Fruit</option>
+                            <option value="vegetable">Vegetable</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Stock</label>
+                        <input type="number" id="product-stock" required min="0">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Image URL</label>
+                    <input type="url" id="product-image" required>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary modal-close">Cancel</button>
+                    <button type="submit" class="btn-primary">Save Product</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast-notification">
+        <div class="toast-content">
+            <div class="toast-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="toast-message">
+                <div class="toast-title">Success!</div>
+                <div class="toast-description">Action completed</div>
+            </div>
+            <button class="toast-close">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="toast-progress"></div>
+    </div>
+
+    <script src="js/admin.js" type="module"></script>
+</body>
+</html>

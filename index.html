@@ -3,24 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hami MiniMarket - Week 3 Cart System</title>
-    <!-- Google Fonts and Font Awesome -->
+    <title>Hami MiniMarket - Final Project</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    
-    <!-- Link to your external CSS file -->
     <link rel="stylesheet" href="css/style.css">
+    <style>
+        .logo-text {
+            font-weight: 700;
+            font-size: 1.8rem;
+            color: var(--primary-green);
+            text-decoration: none;
+        }
+    </style>
 </head>
 <body>
     
-      <!-- Header (Unchanged) -->
+    <!-- Header (UPDATED for Auth) -->
     <header class="header">
         <div class="container">
             <div class="logo">
-                <!-- Using the image from user's upload -->
                 <img src="assets/hami-logo.jpg" 
                      alt="Hami MiniMarket Logo" 
-                     class="logo-img">
+                     class="logo-img"
+                     onerror="this.outerHTML='<a href=\'#\' class=\'logo-text\'>Hami MiniMarket</a>'; this.onerror=null;">
             </div>
             <nav class="nav">
                 <ul class="nav-list">
@@ -28,8 +33,21 @@
                     <li><a href="#products" class="nav-link">Products</a></li>
                     <li><a href="#about" class="nav-link">About</a></li>
                     <li><a href="#contact" class="nav-link">Contact</a></li>
-                    <!-- Cart Icon (Now interactive) -->
-                    <li>
+                    
+                    <!-- (NEW) Auth & Cart Section -->
+                    <li class="nav-auth">
+                        <!-- Shows when logged out -->
+                        <div id="nav-auth-links">
+                            <a href="#account" class="nav-link" id="nav-login-link">Login</a>
+                        </div>
+                        <!-- Shows when logged in -->
+                        <div id="nav-user-info" class="hidden">
+                            <a href="#account" class="nav-link" id="nav-account-link">
+                                <i class="fas fa-user"></i> <span id="nav-username">User</span>
+                            </a>
+                            <button id="logout-btn" title="Logout"><i class="fas fa-sign-out-alt"></i></button>
+                        </div>
+                        <!-- Cart Icon (Moved) -->
                         <div class="cart-icon-wrapper" id="cart-icon" title="View Cart">
                             <i class="fas fa-shopping-cart"></i>
                             <span id="cart-count">0</span>
@@ -47,7 +65,7 @@
 
     <!-- This div will contain the main shop content -->
     <div id="shop-page" class="page">
-        <!-- Hero Section (Unchanged) -->
+        <!-- Hero Section -->
         <section id="home" class="hero">
             <div class="hero-background">
                 <img src="https://images.unsplash.com/photo-1542838132-92c53300491e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2074&q=80" alt="Fresh fruits and vegetables at Hami MiniMarket" class="hero-bg-image">
@@ -60,7 +78,7 @@
             </div>
         </section>
 
-        <!-- Products Section (Unchanged HTML structure) -->
+        <!-- Products Section -->
         <section id="products" class="products">
             <div class="container">
                 <h2 class="section-title">Our Fresh Products</h2>
@@ -97,7 +115,7 @@
             </div>
         </section>
 
-        <!-- About Section (Unchanged) -->
+        <!-- About Section -->
         <section id="about" class="about">
             <div class="container">
                 <div class="about-content">
@@ -124,14 +142,13 @@
                         </div>
                     </div>
                     <div class="about-image">
-                         <!-- Using the image from user's upload -->
-                         <img src="assets/store-interior-image.png" alt="Store Interior">
+                         <img src="assets/our-store.png" alt="Store Interior" onerror="this.src='https://placehold.co/400x450/F5F5DC/2C3E50?text=Our+Store'; this.onerror=null;">
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- Contact Section (Unchanged) -->
+        <!-- Contact Section -->
         <section id="contact" class="contact">
             <div class="container">
                 <h2 class="section-title">Get In Touch</h2>
@@ -178,13 +195,14 @@
         </section>
     </div> <!-- End of #shop-page -->
 
-    <!-- NEW: Order Summary Page -->
+    <!-- Order Summary Page (UPDATED) -->
     <section id="summary-page" class="page hidden">
         <div class="container">
             <div class="summary-container">
                 <div class="summary-header">
                     <h2>Order Summary</h2>
-                    <p>Please review your items before confirming.</p>
+                    <!-- (NEW) Show user greeting -->
+                    <p id="summary-user-greeting">Please review your items before confirming.</p>
                 </div>
                 <div class="summary-body">
                     <h3>Your Items</h3>
@@ -210,7 +228,75 @@
         </div>
     </section>
 
-    <!-- Footer (Unchanged) -->
+    <!-- (NEW) Account Page (for Auth & Order History) -->
+    <section id="account-page" class="page hidden">
+        <div class="container">
+            <!-- This container shows if LOGGED OUT -->
+            <div id="auth-forms-container" class="auth-container">
+                <div class="auth-tabs">
+                    <div class="auth-tab active" id="auth-tab-login">Login</div>
+                    <div class="auth-tab" id="auth-tab-signup">Sign Up</div>
+                </div>
+                
+                <!-- Login Form -->
+                <form class="auth-form" id="login-form">
+                    <h3>Welcome Back!</h3>
+                    <div class="form-group">
+                        <label for="login-email">Email</label>
+                        <input type="email" id="login-email" name="email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="login-password">Password</label>
+                        <input type="password" id="login-password" name="password" required>
+                    </div>
+                    <button type="submit" class="submit-button">Login</button>
+                </form>
+                
+                <!-- Signup Form -->
+                <form class="auth-form hidden" id="signup-form">
+                    <h3>Create Account</h3>
+                    <div class="form-group">
+                        <label for="signup-name">Full Name</label>
+                        <input type="text" id="signup-name" name="name" required minlength="2">
+                    </div>
+                    <div class="form-group">
+                        <label for="signup-email">Email</label>
+                        <input type="email" id="signup-email" name="email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="signup-password">Password</label>
+                        <input type="password" id="signup-password" name="password" required minlength="6">
+                    </div>
+                    <button type="submit" class="submit-button">Sign Up</button>
+                </form>
+            </div>
+            
+            <!-- This container shows if LOGGED IN -->
+            <div id="account-info-container" class="account-info-wrapper hidden">
+                <div class="account-header">
+                    <h2>My Account</h2>
+                    <button class="logout-btn-desktop" id="account-logout-btn">Logout</button>
+                </div>
+                <div class="account-info-content">
+                    <p>Welcome, <strong id="account-username">User</strong>!</p>
+                    <p style="color: var(--text-light);" id="account-email">user@example.com</p>
+                    <br>
+                    <div class="order-history-list">
+                        <h3>Your Order History</h3>
+                        <div id="no-orders-message" class="hidden">
+                            <p>You haven't placed any orders yet.</p>
+                        </div>
+                        <div id="order-history-list">
+                            <!-- Order history will be injected here -->
+                        </div>
+                    </div>
+                    <button class="submit-button back-to-shop-btn logout-btn-mobile" id="account-logout-btn-mobile">Logout</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
     <footer class="footer">
         <div class="container">
             <div class="footer-content">
@@ -225,6 +311,7 @@
                         <li><a href="#products">Products</a></li>
                         <li><a href="#about">About</a></li>
                         <li><a href="#contact">Contact</a></li>
+                        <li><a href="#account" id="footer-account-link">My Account</a></li>
                     </ul>
                 </div>
                 <div class="footer-section">
@@ -243,12 +330,12 @@
         </div>
     </footer>
 
-    <!-- Back to Top Button (Unchanged) -->
+    <!-- Back to Top Button -->
     <button class="back-to-top" id="backToTop">
         <i class="fas fa-arrow-up"></i>
     </button>
     
-    <!-- NEW: Cart Sidebar -->
+    <!-- Cart Sidebar -->
     <div class="cart-overlay" id="cart-overlay"></div>
     <aside class="cart-sidebar" id="cart-sidebar">
         <div class="cart-header">
@@ -257,25 +344,6 @@
         </div>
         <div class="cart-items" id="cart-items-container">
             <!-- Cart items will be injected here -->
-            <!-- e.g.
-            <div class="cart-item">
-                <img src="https://placehold.co/80x80" alt="Product" class="cart-item-img">
-                <div class="cart-item-details">
-                    <div class="cart-item-info">
-                        <h4>Product Name</h4>
-                        <span class="cart-item-price">$2.99</span>
-                    </div>
-                    <div class="cart-item-controls">
-                        <div class="quantity-control">
-                            <button class="quantity-btn" data-action="decrease">-</button>
-                            <input type="number" class="item-quantity" value="1" min="1">
-                            <button class="quantity-btn" data-action="increase">+</button>
-                        </div>
-                        <button class="remove-item-btn"><i class="fas fa-trash"></i></button>
-                    </div>
-                </div>
-            </div>
-            -->
             <!-- Empty Cart Message -->
             <div class="empty-cart-message" id="empty-cart-message">
                 <i class="fas fa-shopping-basket"></i>
@@ -321,6 +389,7 @@
         </div>
         <div class="toast-progress"></div>
     </div>
+    
     <script src="js/main.js" type="module"></script>
 </body>
 </html>

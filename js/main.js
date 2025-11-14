@@ -4,19 +4,316 @@ import { ProductModule } from './product.js';
 import { CartModule } from './cart.js';
 
 // --- GLOBAL CONSTANTS & STATE ---
-// These are needed by imported modules
 const TAX_RATE = 0.05;
 const DISCOUNT_THRESHOLD = 50.00;
 const DISCOUNT_RATE = 0.10;
-window.TAX_RATE = TAX_RATE; // Expose to CartModule via window
+window.TAX_RATE = TAX_RATE;
 
-// Main cart state
+const API_URL = 'http://localhost:5001/api'; // Backend API URL
+
 let cart = [];
+let currentUser = null; // Will be fetched
+let orderHistory = []; // Will be fetched
 
 /**
- * MODULE: UIModule (Task 3)
- * Handles all DOM updates, showing/hiding elements, and page navigation.
- * Exported so CartModule can import it.
+ *  MODULE: AuthModule
+ * Handles REAL login, logout, signup, and order history via API.
+ */
+const AuthModule = {
+    init() {
+        //  Load token and user
+        const token = StorageModule.loadToken();
+        currentUser = StorageModule.loadUser();
+        
+        if (token && currentUser) {
+            this.updateNavUI();
+            this.fetchOrderHistory(); // Fetch real history
+        }
+        this.addListeners();
+    },
+    
+    addListeners() {
+        // Form tabs
+        document.getElementById('auth-tab-login')?.addEventListener('click', () => this.toggleAuthTabs('login'));
+        document.getElementById('auth-tab-signup')?.addEventListener('click', () => this.toggleAuthTabs('signup'));
+        
+        // Form submits
+        document.getElementById('login-form')?.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const email = e.target.elements.email.value;
+            const password = e.target.elements.password.value;
+            this.login(email, password);
+        });
+        document.getElementById('signup-form')?.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const name = e.target.elements.name.value;
+            const email = e.target.elements.email.value;
+            const password = e.target.elements.password.value;
+            this.signup(name, email, password);
+        });
+        
+        // Nav links
+        document.getElementById('nav-login-link')?.addEventListener('click', (e) => {
+            e.preventDefault();
+            UIModule.showPage('account-page');
+        });
+        document.getElementById('nav-account-link')?.addEventListener('click', (e) => {
+            e.preventDefault();
+            UIModule.showPage('account-page');
+        });
+        
+        // Logout buttons
+        document.getElementById('logout-btn')?.addEventListener('click', () => this.logout());
+        document.getElementById('account-logout-btn')?.addEventListener('click', () => this.logout());
+        document.getElementById('account-logout-btn-mobile')?.addEventListener('click', () => this.logout());
+    },
+
+    toggleAuthTabs(activeTab) {
+        const loginTab = document.getElementById('auth-tab-login');
+        const signupTab = document.getElementById('auth-tab-signup');
+        const loginForm = document.getElementById('login-form');
+        const signupForm = document.getElementById('signup-form');
+        
+        if (activeTab === 'login') {
+            loginTab.classList.add('active');
+            signupTab.classList.remove('active');
+            loginForm.classList.remove('hidden');
+            signupForm.classList.add('hidden');
+        } else {
+            loginTab.classList.remove('active');
+            signupTab.classList.add('active');
+            loginForm.classList.add('hidden');
+            signupForm.classList.remove('hidden');
+        }
+    },
+
+    // () Real Login
+    async login(email, password) {
+        if (!email || !password) {
+            UIModule.showToast("Please enter email and password", "error");
+            return;
+        }
+        
+        try {
+            const response = await fetch(`${API_URL}/auth/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+            const data = await response.json();
+            
+            if (!response.ok) throw new Error(data.message || 'Login failed');
+
+            currentUser = data.user;
+            StorageModule.saveUser(currentUser);
+            StorageModule.saveToken(data.token);
+            
+            console.log('Logged in user:', currentUser);
+            console.log('Is admin?', currentUser.isAdmin);
+            
+            // Check if user is admin
+            if (currentUser.isAdmin === true) {
+                // Redirect to admin dashboard
+                console.log('Redirecting to admin dashboard...');
+                UIModule.showToast(`Welcome Admin!`, 'success');
+                setTimeout(() => {
+                    window.location.href = 'admin.html';
+                }, 1000);
+                return;
+            }
+            
+            await this.fetchOrderHistory(); // Fetch real orders
+            
+            this.updateNavUI();
+            UIModule.showPage('shop-page');
+            UIModule.showToast(`Welcome back, ${currentUser.name}!`, 'success');
+
+        } catch (error) {
+            console.error("Login Error:", error);
+            UIModule.showToast(error.message, "error");
+        }
+    },
+    
+    // () Real Signup
+    async signup(name, email, password) {
+        if (!name || !email || !password) {
+            UIModule.showToast("Please fill in all fields", "error");
+            return;
+        }
+
+        if (name.length < 2) {
+            UIModule.showToast("Name must be at least 2 characters", "error");
+            return;
+        }
+
+        if (password.length < 6) {
+            UIModule.showToast("Password must be at least 6 characters", "error");
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_URL}/auth/signup`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, email, password })
+            });
+            const data = await response.json();
+            
+            if (!response.ok) throw new Error(data.message || 'Signup failed');
+
+            currentUser = data.user;
+            StorageModule.saveUser(currentUser);
+            StorageModule.saveToken(data.token);
+            
+            orderHistory = []; // New user, no history
+            
+            this.updateNavUI();
+            UIModule.showPage('shop-page');
+            UIModule.showToast(`Welcome, ${currentUser.name}! Account created.`, 'success');
+
+        } catch (error) {
+            console.error("Signup Error:", error);
+            UIModule.showToast(error.message, "error");
+        }
+    },
+    
+    // () Real Logout
+    logout() {
+        if (currentUser) {
+            UIModule.showToast(`Goodbye, ${currentUser.name}!`, 'info');
+        }
+        currentUser = null;
+        orderHistory = [];
+        StorageModule.clearUser();
+        StorageModule.clearToken(); // (NEW) Clear the token
+        this.updateNavUI();
+        UIModule.showPage('shop-page');
+    },
+    
+    // (No change) Updates nav bar based on `currentUser`
+    updateNavUI() {
+        const userInfo = document.getElementById('nav-user-info');
+        const authLinks = document.getElementById('nav-auth-links');
+        const footerAccountLink = document.getElementById('footer-account-link');
+
+        if (currentUser) {
+            userInfo.classList.remove('hidden');
+            authLinks.classList.add('hidden');
+            document.getElementById('nav-username').textContent = currentUser.name;
+            footerAccountLink.textContent = 'My Account';
+        } else {
+            userInfo.classList.add('hidden');
+            authLinks.classList.remove('hidden');
+            footerAccountLink.textContent = 'Login / Sign Up';
+        }
+    },
+    
+    // (No change) Renders EITHER auth forms or account info
+    renderAccountPage() {
+        const authContainer = document.getElementById('auth-forms-container');
+        const accountInfo = document.getElementById('account-info-container');
+        
+        if (currentUser) {
+            authContainer.classList.add('hidden');
+            accountInfo.classList.remove('hidden');
+            document.getElementById('account-username').textContent = currentUser.name;
+            document.getElementById('account-email').textContent = currentUser.email;
+            this.renderOrderHistory();
+        } else {
+            authContainer.classList.remove('hidden');
+            accountInfo.classList.add('hidden');
+            this.toggleAuthTabs('login'); // Default to login
+        }
+    },
+    
+    // (NEW) Fetches real order history
+    async fetchOrderHistory() {
+        const token = StorageModule.loadToken();
+        if (!token) {
+            console.log('No token found, cannot fetch order history');
+            return; // Not logged in
+        }
+        
+        console.log('Fetching order history...');
+        
+        try {
+            const response = await fetch(`${API_URL}/orders`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.message || 'Failed to fetch orders');
+            }
+            
+            orderHistory = await response.json();
+            console.log('Order history fetched:', orderHistory);
+            this.renderOrderHistory(); // Re-render with fetched data
+
+        } catch (error) {
+            console.error("Fetch History Error:", error);
+            if (error.message.includes('Token')) this.logout(); // Token is bad, log out
+        }
+    },
+
+    // () Renders order history from `orderHistory` array
+    renderOrderHistory() {
+        const listEl = document.getElementById('order-history-list');
+        const noOrdersEl = document.getElementById('no-orders-message');
+
+        if (!listEl || !noOrdersEl) {
+            console.log('Order history elements not found');
+            return;
+        }
+        
+        listEl.innerHTML = ''; // Clear old list
+        
+        console.log('Rendering order history, count:', orderHistory.length);
+        
+        if (orderHistory.length === 0) {
+            noOrdersEl.classList.remove('hidden');
+        } else {
+            noOrdersEl.classList.add('hidden');
+            orderHistory.forEach(order => {
+                const orderEl = document.createElement('div');
+                orderEl.className = 'order-item';
+                
+                // Format date
+                const orderDate = new Date(order.date).toLocaleDateString();
+                
+                // Create list of items
+                const itemsHtml = order.items.map(item => `
+                    <div class="order-product">
+                        <img src="${item.image}" alt="${item.name}" class="order-product-img">
+                        <div class="order-product-info">
+                            <div class="name">${item.name}</div>
+                            <div class="qty">Qty: ${item.quantity}</div>
+                        </div>
+                        <span class="order-product-price">$${(item.price * item.quantity).toFixed(2)}</span>
+                    </div>
+                `).join('');
+                
+                // Note: We use order._id from MongoDB, but the virtual 'id' works too
+                orderEl.innerHTML = `
+                    <div class="order-item-header">
+                        <div>
+                            <h4>Order #${order.id.slice(-6)}</h4> 
+                            <span>${orderDate}</span>
+                        </div>
+                        <span class="order-total">$${order.total.toFixed(2)}</span>
+                    </div>
+                    <div class="order-item-body">
+                        ${itemsHtml}
+                    </div>
+                `;
+                listEl.appendChild(orderEl);
+            });
+        }
+    },
+};
+
+/**
+ * MODULE: UIModule
  */
 export const UIModule = {
     init() {
@@ -25,14 +322,19 @@ export const UIModule = {
         document.getElementById('close-cart-btn')?.addEventListener('click', this.toggleCart);
         document.getElementById('cart-overlay')?.addEventListener('click', this.toggleCart);
         
-        // Page navigation listeners
+        // () Page navigation listeners
         document.getElementById('cart-checkout-btn')?.addEventListener('click', () => {
-            // *** FIX for Bug 2: Check if cart has items ***
-            if (cart.length > 0) {
-                this.showPage('summary-page');
-                this.toggleCart(); // Close cart
-            } else {
+            if (cart.length === 0) {
                 this.showToast("Your cart is empty! Add some items first.", 'warning');
+                return;
+            }
+            if (!currentUser) { // Check for real user
+                this.showToast("Please log in to proceed to checkout.", 'info');
+                this.showPage('account-page');
+                this.toggleCart(); 
+            } else {
+                this.showPage('summary-page');
+                this.toggleCart();
             }
         });
         
@@ -40,40 +342,77 @@ export const UIModule = {
             this.showPage('shop-page');
         });
         
-        // Confirm order
-        document.getElementById('confirm-order-btn')?.addEventListener('click', () => {
-            showSuccessMessage('order-success', 'Order Confirmed!', 'Thank you for your purchase. We are preparing your items.');
-            CartModule.clearCart(cart); // Pass cart
-            setTimeout(() => {
-                this.showPage('shop-page');
-            }, 3000);
+        // () Confirm order
+        document.getElementById('confirm-order-btn')?.addEventListener('click', async () => {
+            const token = StorageModule.loadToken();
+            if (!token || !currentUser) {
+                UIModule.showToast("You are not logged in.", "error");
+                AuthModule.logout();
+                return;
+            }
+            
+            const totals = CartModule.getCartTotals(cart); 
+            
+            try {
+                // (NEW) Save order to backend
+                const response = await fetch(`${API_URL}/orders`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        items: cart,
+                        total: totals.total
+                    })
+                });
+                
+                if (!response.ok) {
+                    const data = await response.json();
+                    throw new Error(data.message || "Failed to save order");
+                }
+                
+                // Order saved successfully
+                showSuccessMessage('order-success', 'Order Confirmed!', 'Thank you! Your order is now in your history.');
+                CartModule.clearCart(cart);
+                
+                // Fetch updated order history
+                await AuthModule.fetchOrderHistory();
+                
+                setTimeout(() => {
+                    this.showPage('shop-page');
+                }, 3000);
+
+            } catch (error) {
+                console.error("Order Confirm Error:", error);
+                UIModule.showToast(error.message, "error");
+            }
         });
     },
     
-    // Toggles the cart sidebar
+    // (No change)
     toggleCart() {
         document.getElementById('cart-sidebar')?.classList.toggle('active');
         document.getElementById('cart-overlay')?.classList.toggle('active');
     },
     
-    // The main function to update all cart-related UI
-    updateCart(cart) { // Now accepts cart as an argument
+    // (No change)
+    updateCart(cart) {
         const cartItemsContainer = document.getElementById('cart-items-container');
         const emptyCartMessage = document.getElementById('empty-cart-message');
         const cartFooter = document.getElementById('cart-footer');
         
         if (!cartItemsContainer || !emptyCartMessage || !cartFooter) return;
 
-        // *** FIX for Bug 1: Clear only cart items, not the empty message div ***
         const itemsToRemove = Array.from(cartItemsContainer.children).filter(child => child.id !== 'empty-cart-message');
         itemsToRemove.forEach(child => cartItemsContainer.removeChild(child));
         
         if (cart.length === 0) {
-            emptyCartMessage.classList.add('active'); // Use CSS class to show
-            cartFooter.classList.remove('active'); // Use CSS class to hide
+            emptyCartMessage.classList.add('active');
+            cartFooter.classList.remove('active');
         } else {
-            emptyCartMessage.classList.remove('active'); // Use CSS class to hide
-            cartFooter.classList.add('active'); // Use CSS class to show
+            emptyCartMessage.classList.remove('active');
+            cartFooter.classList.add('active'); 
             
             cart.forEach(item => {
                 const itemEl = document.createElement('div');
@@ -100,10 +439,9 @@ export const UIModule = {
             });
         }
         
-        // Update totals
-        const totals = CartModule.getCartTotals(cart); // Pass cart
+        // Update totals (no change)
+        const totals = CartModule.getCartTotals(cart);
         document.getElementById('cart-subtotal').textContent = `$${totals.subtotal.toFixed(2)}`;
-        
         const discountRow = document.getElementById('cart-discount-row');
         if (totals.discount > 0) {
             document.getElementById('cart-discount').textContent = `-$${totals.discount.toFixed(2)}`;
@@ -111,39 +449,29 @@ export const UIModule = {
         } else {
             discountRow.style.display = 'none';
         }
-        
         document.getElementById('cart-tax').textContent = `$${totals.tax.toFixed(2)}`;
         document.getElementById('cart-total').textContent = `$${totals.total.toFixed(2)}`;
         
-        // Update navbar cart count
         const totalQuantity = cart.reduce((sum, item) => sum + item.quantity, 0);
         document.getElementById('cart-count').textContent = totalQuantity;
     },
     
-    // Shows an advanced toast notification
+    // (No change)
     showToast(message, type = 'success', duration = 3000) {
         const toast = document.getElementById('toast-notification');
         if (!toast) return;
         
-        // Clear any existing timeout
-        if (toast.timeoutId) {
-            clearTimeout(toast.timeoutId);
-        }
+        if (toast.timeoutId) clearTimeout(toast.timeoutId);
         
-        // Remove any existing type classes
         toast.classList.remove('success', 'error', 'warning', 'info');
-        
-        // Add the new type class
         toast.classList.add(type);
         
-        // Update content based on type
         const iconMap = {
             success: 'fa-check-circle',
             error: 'fa-exclamation-circle',
             warning: 'fa-exclamation-triangle',
             info: 'fa-info-circle'
         };
-        
         const titleMap = {
             success: 'Success!',
             error: 'Error!',
@@ -151,15 +479,10 @@ export const UIModule = {
             info: 'Info'
         };
         
-        const icon = toast.querySelector('.toast-icon i');
-        const title = toast.querySelector('.toast-title');
-        const description = toast.querySelector('.toast-description');
+        toast.querySelector('.toast-icon i').className = `fas ${iconMap[type] || iconMap.success}`;
+        toast.querySelector('.toast-title').textContent = titleMap[type] || titleMap.success;
+        toast.querySelector('.toast-description').textContent = message;
         
-        if (icon) icon.className = `fas ${iconMap[type] || iconMap.success}`;
-        if (title) title.textContent = titleMap[type] || titleMap.success;
-        if (description) description.textContent = message;
-        
-        // Remove and re-add progress bar for animation restart
         const oldProgress = toast.querySelector('.toast-progress');
         if (oldProgress) oldProgress.remove();
         
@@ -168,15 +491,12 @@ export const UIModule = {
         newProgress.style.animation = `progressBar ${duration}ms linear forwards`;
         toast.appendChild(newProgress);
         
-        // Show toast
         toast.classList.add('show');
         
-        // Auto-hide after duration
         toast.timeoutId = setTimeout(() => {
             toast.classList.remove('show');
         }, duration);
         
-        // Close button handler
         const closeBtn = toast.querySelector('.toast-close');
         if (closeBtn) {
             closeBtn.onclick = () => {
@@ -186,7 +506,7 @@ export const UIModule = {
         }
     },
     
-    // Handles switching between "pages"
+    // () showPage
     showPage(pageId) {
         document.querySelectorAll('.page').forEach(page => {
             page.classList.add('hidden');
@@ -201,14 +521,21 @@ export const UIModule = {
             this.renderSummaryPage();
         }
         
-        window.scrollTo(0, 0); // Scroll to top on page change
+        // (NEW) Render account page
+        if (pageId === 'account-page') {
+            AuthModule.renderAccountPage();
+        }
+        
+        window.scrollTo(0, 0);
     },
     
-    // Renders the order summary page
+    // () renderSummaryPage
     renderSummaryPage() {
         const summaryList = document.getElementById('summary-list');
         const summaryTotals = document.getElementById('summary-totals');
-        if (!summaryList || !summaryTotals) return;
+        const greeting = document.getElementById('summary-user-greeting');
+
+        if (!summaryList || !summaryTotals || !greeting) return;
 
         summaryList.innerHTML = '';
         
@@ -216,53 +543,55 @@ export const UIModule = {
             summaryList.innerHTML = '<p>Your cart is empty.</p>';
             summaryTotals.innerHTML = '';
             document.getElementById('confirm-order-btn').style.display = 'none';
-            return;
-        }
-        
-        document.getElementById('confirm-order-btn').style.display = 'block';
-
-        cart.forEach(item => {
-            const itemEl = document.createElement('div');
-            itemEl.className = 'summary-item';
-            itemEl.innerHTML = `
-                <img src="${item.image}" alt="${item.name}" class="summary-item-img">
-                <div class="summary-item-info">
-                    <h4>${item.name}</h4>
-                    <p>Quantity: ${item.quantity}</p>
+        } else {
+             document.getElementById('confirm-order-btn').style.display = 'block';
+             cart.forEach(item => {
+                const itemEl = document.createElement('div');
+                itemEl.className = 'summary-item';
+                itemEl.innerHTML = `
+                    <img src="${item.image}" alt="${item.name}" class="summary-item-img">
+                    <div class="summary-item-info">
+                        <h4>${item.name}</h4>
+                        <p>Quantity: ${item.quantity}</p>
+                    </div>
+                    <span class="summary-item-price">$${(item.price * item.quantity).toFixed(2)}</span>
+                `;
+                summaryList.appendChild(itemEl);
+            });
+            
+            const totals = CartModule.getCartTotals(cart);
+            summaryTotals.innerHTML = `
+                <div class="cart-summary-row">
+                    <span>Subtotal</span>
+                    <span>$${totals.subtotal.toFixed(2)}</span>
                 </div>
-                <span class="summary-item-price">$${(item.price * item.quantity).toFixed(2)}</span>
+                ${totals.discount > 0 ? `
+                <div class="cart-summary-row discount">
+                    <span>Discount (10%)</span>
+                    <span>-$${totals.discount.toFixed(2)}</span>
+                </div>` : ''}
+                <div class="cart-summary-row">
+                    <span>Tax (5%)</span>
+                    <span>$${totals.tax.toFixed(2)}</span>
+                </div>
+                <div class="cart-summary-row total">
+                    <span>Total</span>
+                    <span>$${totals.total.toFixed(2)}</span>
+                </div>
             `;
-            summaryList.appendChild(itemEl);
-        });
-        
-        const totals = CartModule.getCartTotals(cart); // Pass cart
-        summaryTotals.innerHTML = `
-            <div class="cart-summary-row">
-                <span>Subtotal</span>
-                <span>$${totals.subtotal.toFixed(2)}</span>
-            </div>
-            ${totals.discount > 0 ? `
-            <div class="cart-summary-row discount">
-                <span>Discount (10%)</span>
-                <span>-$${totals.discount.toFixed(2)}</span>
-            </div>` : ''}
-            <div class="cart-summary-row">
-                <span>Tax (5%)</span>
-                <span>$${totals.tax.toFixed(2)}</span>
-            </div>
-            <div class="cart-summary-row total">
-                <span>Total</span>
-                <span>$${totals.total.toFixed(2)}</span>
-            </div>
-        `;
+        }
+
+        // (NEW) Greet the user
+        if (currentUser) {
+            greeting.textContent = `You are checking out as ${currentUser.name}.`;
+        } else {
+            greeting.textContent = `Please review your items.`;
+        }
     }
 };
 
-
-// --- START OF ORIGINAL SCRIPT (WEEK 1) ---
-
-// --- General Page UI ---
-
+// --- (All your original script functions: initMobileMenu, etc.) ---
+// ... (Copy/paste all of them here, unchanged) ...
 function initMobileMenu() {
     const hamburger = document.querySelector('.hamburger');
     const navList = document.querySelector('.nav-list');
@@ -283,7 +612,6 @@ function initMobileMenu() {
         });
         
         document.addEventListener('click', (e) => {
-            // Updated to prevent closing when cart icon is clicked
             if (cartIcon && !hamburger.contains(e.target) && !navList.contains(e.target) && !cartIcon.contains(e.target) && !e.target.closest('.cart-icon-wrapper')) {
                 navList.classList.remove('active');
                 hamburger.classList.remove('active');
@@ -296,6 +624,14 @@ function initBackToTop() {
     const backToTopButton = document.getElementById('backToTop');
     
     if (backToTopButton) {
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 300) {
+                backToTopButton.classList.add('show');
+            } else {
+                backToTopButton.classList.remove('show');
+            }
+        });
+        
         backToTopButton.addEventListener('click', () => {
             window.scrollTo({ top: 0, behavior: 'smooth' });
         });
@@ -306,14 +642,24 @@ function initSmoothScrolling() {
     const navLinks = document.querySelectorAll('.nav-link[href^="#"]');
     navLinks.forEach(link => {
         link.addEventListener('click', function(e) {
-            e.preventDefault();
             const targetId = this.getAttribute('href');
-            if (targetId === "#") return; 
+            
+            // Skip if it's just "#" or "#account"
+            if (targetId === "#" || targetId === "#account") return;
+            
+            e.preventDefault();
 
             const targetSection = document.querySelector(targetId);
             if (!targetSection) return; 
 
-            if (document.getElementById('summary-page') && !document.getElementById('summary-page').classList.contains('hidden')) {
+            // Check if we're on summary or account page
+            const summaryPage = document.getElementById('summary-page');
+            const accountPage = document.getElementById('account-page');
+            const isOnSummaryPage = summaryPage && !summaryPage.classList.contains('hidden');
+            const isOnAccountPage = accountPage && !accountPage.classList.contains('hidden');
+
+            if (isOnSummaryPage || isOnAccountPage) {
+                // Switch to shop page first, then scroll
                 UIModule.showPage('shop-page');
                 setTimeout(() => {
                     const headerHeight = document.querySelector('.header').offsetHeight;
@@ -321,6 +667,7 @@ function initSmoothScrolling() {
                     window.scrollTo({ top: targetPosition, behavior: 'smooth' });
                 }, 50);
             } else {
+                // Already on shop page, just scroll
                 const headerHeight = document.querySelector('.header').offsetHeight;
                 const targetPosition = targetSection.offsetTop - headerHeight;
                 window.scrollTo({ top: targetPosition, behavior: 'smooth' });
@@ -337,6 +684,16 @@ function initSmoothScrolling() {
                 const targetPosition = productsSection.offsetTop - headerHeight;
                 window.scrollTo({ top: targetPosition, behavior: 'smooth' });
             }
+        });
+    }
+
+    // Handle logo click to return to home
+    const logo = document.querySelector('.logo');
+    if (logo) {
+        logo.addEventListener('click', (e) => {
+            e.preventDefault();
+            UIModule.showPage('shop-page');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         });
     }
 }
@@ -358,7 +715,7 @@ function initScrollAnimations() {
         });
     }, observerOptions);
     
-    const animatedElements = document.querySelectorAll('.feature, .info-item');
+    const animatedElements = document.querySelectorAll('.feature, .info-item, .product-card');
     animatedElements.forEach(el => {
         el.style.opacity = '0';
         el.style.transform = 'translateY(30px)';
@@ -367,7 +724,6 @@ function initScrollAnimations() {
     });
 }
 
-// Export this function so ProductModule can import it
 export function debounce(func, wait) {
     let timeout;
     return function executedFunction(...args) {
@@ -382,7 +738,6 @@ export function debounce(func, wait) {
 
 const optimizedScrollHandler = debounce(() => {
     const header = document.querySelector('.header');
-    const backToTopButton = document.getElementById('backToTop');
     const scrollY = window.scrollY;
 
     if (header) {
@@ -398,14 +753,6 @@ const optimizedScrollHandler = debounce(() => {
             }
         }
     }
-    
-    if (backToTopButton) {
-        if (scrollY > 300) {
-            backToTopButton.classList.add('show');
-        } else {
-            backToTopButton.classList.remove('show');
-        }
-    }
 }, 10);
 
 window.addEventListener('load', () => {
@@ -416,8 +763,7 @@ window.addEventListener('load', () => {
 
 window.addEventListener('scroll', optimizedScrollHandler);
 
-// --- Contact Form Validation (Task 1) ---
-
+// --- Contact Form Validation ---
 function initFormValidation() {
     const contactForm = document.getElementById('contactForm');
     if (!contactForm) return;
@@ -425,7 +771,7 @@ function initFormValidation() {
     contactForm.addEventListener('submit', (e) => {
         e.preventDefault();
         if (validateAllFields()) {
-            showSuccessMessage('contactSuccess', 'Message sent successfully!', 'Your message has been sent. We\'ll get back to you soon!');
+            showSuccessMessage('contactSuccess', 'Message sent successfully!', 'We\'ll get back to you soon!');
             contactForm.reset();
         }
     });
@@ -495,7 +841,6 @@ function clearFieldError(field) {
     }
 }
 
-// Exported so UIModule can use it
 export function showSuccessMessage(id, title, text) {
     let existingModal = document.getElementById(id);
     if (existingModal) existingModal.remove();
@@ -531,29 +876,29 @@ export function showSuccessMessage(id, title, text) {
     }, 3000);
 }
 
-// --- END OF ORIGINAL SCRIPT ---
-
 
 /**
- * APP INITIALIZATION
- * This is the main entry point for the application.
+ * () APP INITIALIZATION
  */
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    // (NEW) Init Auth first to load user
+    AuthModule.init(); 
+
     // Init original UI functions (Task 1)
     initMobileMenu();
     initBackToTop();
     initFormValidation();
     initSmoothScrolling();
-    initScrollAnimations();
-    
-    // Init Product module (Task 2)
-    ProductModule.init();
+    // initScrollAnimations(); // Note: ProductModule now handles its own animations
+
+    // () Await product module initialization
+    await ProductModule.init();
     
     // Load cart from storage (Task 3)
     cart = StorageModule.loadCart();
     
     // Init Cart logic (Task 3)
-    CartModule.init(cart); // Pass the loaded cart
+    CartModule.init(cart);
     
     // Init UI (Task 3)
     UIModule.init();
