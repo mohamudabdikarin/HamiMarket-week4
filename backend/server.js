@@ -311,6 +311,6 @@ app.delete('/api/admin/products/:id', async (req, res) => {
 });
 
 // Start server (Railway needs this, Vercel doesn't)
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, '0.0.0.0', () => console.log(`Server running on port ${PORT}`));
 
 export default app;
