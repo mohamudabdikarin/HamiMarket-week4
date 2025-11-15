@@ -2,7 +2,7 @@
 // Automatically detect if we're in production or development
 const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:5001/api'
-    : 'https://hami-mini-market.onrender.com';
+    : 'https://hami-mini-market.onrender.com/api';
 let currentEditingProduct = null;
 
 // Check if user is logged in and is admin
